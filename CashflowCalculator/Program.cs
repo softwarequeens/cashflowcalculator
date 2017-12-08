@@ -10,36 +10,59 @@ namespace CashflowCalculator
     {
         static void Main(string[] args)
         {
-            Console.Write("Please enter in your loan amount: ");
-            string amount1 = Console.ReadLine();
-            float amount = Int32.Parse(amount1);
-            Console.WriteLine(string.Format("You entered {0}", amount));
-
-            Console.Write("Please enter in your loan duration: ");
-            string duration1 = Console.ReadLine();
-            int duration = Int32.Parse(duration1);
-            Console.WriteLine(string.Format("You entered {0}", duration));
-
-            Console.Write("Please enter in your interest rate: ");
-            string r1 = Console.ReadLine();
-            float r = float.Parse(r1);
-            Console.WriteLine(string.Format("You entered {0}", r));
-
-            int ind = 1;
-            int numOfMonth = 0;
-            int principal = 0;
-            int remainBal = amount - principal;
-            while (ind>0)
+            int indication = 1;
+            List<List<CashflowRow>> fullList = new List<List<CashflowRow>>();
+            
+            while (indication > 0)
             {
-                numOfMonth++;
-                int interestPay = Calculator.InterestCalc(amount, r, remainBal);
-                int principalPay = Calculator.PrincipalPay(remainBal,interestPay);
-                remainBal  = remainBal - interestPay;
-                Console.WriteLine(numOfMonth + " " + interestPay + " " + principalPay + " " + remainBal);
-                Console.Write("Would you want to calculate for next month? Enter Yes or No");
-                string conti = Console.ReadLine();
-                if (conti.Equals("Yes")) {ind = 1;}
-                else { ind = 0; }
+                Loan loan = new Loan();
+                Console.Write("Please enter in your loan amount: ");
+                string amount1 = Console.ReadLine();
+                loan.Amount = decimal.Parse(amount1);
+
+                Console.Write("Please enter in your loan duration: ");
+                string duration1 = Console.ReadLine();
+                loan.Duration = Int32.Parse(duration1);
+
+                Console.Write("Please enter in your interest rate: ");
+                string r1 = Console.ReadLine();
+                loan.Rate = decimal.Parse(r1);
+
+                List<CashflowRow> flowList = Calculator.CalculateCashflow(loan);
+                fullList.Add(flowList);
+                
+                int length = flowList.Count;
+                Console.WriteLine("Month\t\tInterest\tPrincipal\tRemaining Balance");
+                for (int i = 0; i < length; i++)
+                {
+                    Console.WriteLine(flowList[i].Month + "\t\t" + Math.Round(flowList[i].InterestPayment, 2) + "\t\t" +
+                        Math.Round(flowList[i].PrincipalPayment, 2) + "\t\t" + Math.Round(flowList[i].RemainingBalance, 2));
+                }
+
+                Console.Write("Would you want to enter anoother one? yes(1)/no(0)");
+                indication = int.Parse(Console.ReadLine());
+            }
+
+            int maxMonth = fullList.Max(x => x.Count);
+            List<CashflowRow> pool = new List<CashflowRow>();
+            for (var i = 0; i < maxMonth; ++i)
+            {
+                CashflowRow cashflowRow = new CashflowRow();
+                cashflowRow.Month = i + 1;
+                foreach (var cashflow in fullList)
+                {
+                    int cashflowMonths = cashflow.Count;
+                    cashflowRow.InterestPayment += cashflowMonths > i ? cashflow[i].InterestPayment : 0;
+                    cashflowRow.PrincipalPayment += cashflowMonths > i ? cashflow[i].PrincipalPayment : 0;
+                    cashflowRow.RemainingBalance += cashflowMonths > i ? cashflow[i].RemainingBalance : 0;
+                }
+                pool.Add(cashflowRow);
+            }
+            Console.WriteLine("Month\t\tInterest\tPrincipal\tRemaining Balance");
+            for (int i = 0; i < pool.Count; i++)
+            {
+                Console.WriteLine(pool[i].Month + "\t\t" + Math.Round(pool[i].InterestPayment, 2) + "\t\t" +
+                    Math.Round(pool[i].PrincipalPayment, 2) + "\t\t" + Math.Round(pool[i].RemainingBalance, 2));
             }
 
         }

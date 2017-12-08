@@ -8,22 +8,46 @@ namespace CashflowCalculator
 {
     class Calculator
     {
-        private int amount, duration, r, numOfMonth, remainBal;
-
-        public static int MonthlyPayment(int amount, int duration, int r)
+        private static decimal MonthlyPayment(decimal amount, int duration, decimal r) 
         {
-            int MonthlyPay = amount * (r / 1200) / (1 - (1 + r / 1200) ^ (-duration*12));
-            return MonthlyPay;
+            double numerator = Convert.ToDouble(amount * (r / 1200));
+            double denominator = (1 - Math.Pow(Convert.ToDouble(1 + r / 1200), -duration));
+            return Convert.ToDecimal(numerator / denominator);
         }
-        public static int InterestCalc(int amount, int r, int remainBal)
+        private static decimal InterestCalc(decimal r, decimal remainBal)
         {
-            int InterestPayment = remainBal * r / 1200;
+            decimal InterestPayment = remainBal * r / 1200;
             return InterestPayment;
         }
-        public static int PrincipalPay(int MonthlyPay, int InterestPayment)
+        private static decimal PrincipalPay(decimal MonthlyPay, decimal InterestPayment)
         {
-            int PrincipalPay = MonthlyPay - InterestPayment;
+            decimal PrincipalPay = MonthlyPay - InterestPayment;
             return PrincipalPay;
+        }
+
+        public static List<CashflowRow> CalculateCashflow(Loan loan)
+        {
+            List<CashflowRow> flowList = new List<CashflowRow>();
+            
+            decimal monthlyPay = MonthlyPayment(loan.Amount, loan.Duration, loan.Rate);
+            Console.WriteLine(monthlyPay);          
+            decimal RemainingBalance = loan.Amount;
+
+            for (int month = 1; month <= loan.Duration; month++)
+            {
+                CashflowRow flowRow = new CashflowRow();
+
+                flowRow.RemainingBalance = RemainingBalance;
+
+                flowRow.Month = month;
+                flowRow.InterestPayment = InterestCalc(loan.Rate, flowRow.RemainingBalance);
+                flowRow.PrincipalPayment = PrincipalPay(monthlyPay, flowRow.InterestPayment);
+                flowRow.RemainingBalance = flowRow.RemainingBalance - flowRow.PrincipalPayment;
+                flowList.Add(flowRow);
+
+                RemainingBalance = flowRow.RemainingBalance;
+            }
+            return flowList; 
         }
 
     }
